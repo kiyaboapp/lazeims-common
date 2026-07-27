@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lazeims-common"
+version = "0.1.0"
+description = "Shared validation rules, versioned contracts, natural keys and canonical hashing for LAZEIMS Central and Station."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "LAZEIMS" }]
+dependencies = [
+    "pydantic>=2.5,<3.0",
+    "cryptography>=42.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["lazeims_common*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-q"
+
+# Contract/version identifiers frozen at Milestone 0.
+# station-package/v1, station-sync/v1, collection-export/v1, rules_version 1.0
