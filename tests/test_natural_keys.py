@@ -35,7 +35,7 @@ def test_build_natural_key_total():
     nk = build_natural_key("FTNA-2026", "S1234-0123", "011", "THEORY1")
     assert nk == NaturalKey("FTNA-2026", "S1234-0123", "011", PaperType.THEORY1, None)
     assert nk.to_dict() == {
-        "exam_code": "FTNA-2026",
+        "exam_id": "FTNA-2026",
         "student_id": "S1234-0123",
         "subject_code": "011",
         "paper_type": "THEORY1",
@@ -55,10 +55,10 @@ def test_build_natural_key_unknown_paper():
     assert exc.value.code == RejectionCode.INVALID_NATURAL_KEY
 
 
-@pytest.mark.parametrize("missing", ["exam_code", "student_id", "subject_code", "paper_type"])
+@pytest.mark.parametrize("missing", ["exam_id", "student_id", "subject_code", "paper_type"])
 def test_parse_natural_key_missing_field(missing):
     data = {
-        "exam_code": "FTNA-2026",
+        "exam_id": "FTNA-2026",
         "student_id": "S1",
         "subject_code": "011",
         "paper_type": "THEORY1",
@@ -71,7 +71,7 @@ def test_parse_natural_key_missing_field(missing):
 
 def test_parse_natural_key_roundtrip():
     data = {
-        "exam_code": "FTNA-2026",
+        "exam_id": "FTNA-2026",
         "student_id": "S1234-0123",
         "subject_code": "011",
         "paper_type": "THEORY1",

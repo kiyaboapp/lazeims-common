@@ -65,7 +65,7 @@ def test_sync_request_batch_bounds():
     ev = SyncEvent(
         event_id="evt_1",
         entity_type=SyncEntityType.STUDENT_PAPER_MARKS_REPLACED,
-        natural_key={"exam_code": "FTNA-2026", "student_id": "S1", "subject_code": "011", "paper_type": "THEORY1"},
+        natural_key={"exam_id": "FTNA-2026", "student_id": "S1", "subject_code": "011", "paper_type": "THEORY1"},
         value={"mode": "TOTAL_MARKS", "total": 67},
         local_version=1,
         actor_assignment_id="assign_1",
@@ -73,7 +73,7 @@ def test_sync_request_batch_bounds():
     )
     req = SyncRequest(
         station_code="STATION-05",
-        exam_code="FTNA-2026",
+        exam_id="FTNA-2026",
         package_id="pkg_1",
         package_version=3,
         rules_version="1.0",
@@ -86,7 +86,7 @@ def test_sync_request_empty_batch_rejected():
     with pytest.raises(PydanticValidationError):
         SyncRequest(
             station_code="STATION-05",
-            exam_code="FTNA-2026",
+            exam_id="FTNA-2026",
             package_id="pkg_1",
             package_version=3,
             rules_version="1.0",
@@ -106,7 +106,7 @@ def test_station_package_manifest_defaults_contract_version():
         rules_version="1.0",
         software_min_version="1.0.0",
         station_code="STATION-05",
-        exam_code="FTNA-2026",
+        exam_id="FTNA-2026",
         configuration_hash="sha256:abc",
         issued_at=datetime.now(timezone.utc),
         scope={"schools": ["S1234"], "subjects": ["011"], "papers": ["THEORY1"]},
