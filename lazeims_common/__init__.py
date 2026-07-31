@@ -6,8 +6,25 @@ collection rule lives exactly once.
 
 from __future__ import annotations
 
-from . import enums, errors, hashing, natural_keys, portable, reconcile, schemas, validation
+from . import (
+    enums,
+    errors,
+    exametrics_digest,
+    hashing,
+    natural_keys,
+    portable,
+    reconcile,
+    schemas,
+    validation,
+)
 from .errors import LazeimsError, ValidationError, error_envelope
+from .exametrics_digest import (
+    canonical_collection,
+    chunk_manifest,
+    chunk_payload,
+    collection_digest,
+    merge_chunks,
+)
 
 __version__ = "0.1.0"
 
@@ -21,6 +38,7 @@ EXAMETRICS_INTEGRATION_CONTRACT = "exametrics-integration/v2"
 __all__ = [
     "enums",
     "errors",
+    "exametrics_digest",
     "hashing",
     "natural_keys",
     "portable",
@@ -30,6 +48,11 @@ __all__ = [
     "LazeimsError",
     "ValidationError",
     "error_envelope",
+    "canonical_collection",
+    "collection_digest",
+    "chunk_payload",
+    "chunk_manifest",
+    "merge_chunks",
     "__version__",
     "RULES_VERSION",
     "STATION_PACKAGE_CONTRACT",

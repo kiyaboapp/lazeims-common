@@ -74,3 +74,12 @@ class SyncResponse(BaseModel):
     duplicates: list[DuplicateResult] = Field(default_factory=list)
     rejected: list[RejectedResult] = Field(default_factory=list)
     server_time: datetime
+    exam_phase: str | None = Field(
+        default=None,
+        description=(
+            "Central's current phase for this exam, so a station can warn its "
+            "operator before entry locks instead of discovering it on the next "
+            "rejected batch. Optional: a station talking to an older Central "
+            "simply gets None, which is why adding it keeps station-sync/v1."
+        ),
+    )

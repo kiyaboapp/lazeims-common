@@ -99,6 +99,33 @@ def test_sync_response_defaults():
     assert resp.accepted == [] and resp.duplicates == [] and resp.rejected == []
 
 
+# ─── SyncResponse.exam_phase (S1) ────────────────────────────────────────────────
+
+def test_sync_response_omitting_exam_phase_still_validates():
+    """A station on an older Central gets no exam_phase and must not break."""
+    resp = SyncResponse(server_time=datetime.now(timezone.utc))
+    assert resp.exam_phase is None
+
+
+def test_sync_response_carries_exam_phase():
+    resp = SyncResponse(server_time=datetime.now(timezone.utc), exam_phase="ENTRY_LOCKED")
+    assert resp.exam_phase == "ENTRY_LOCKED"
+
+
+def test_sync_response_exam_phase_round_trips_over_json():
+    payload = SyncResponse(
+        server_time=datetime.now(timezone.utc), exam_phase="PROCESSING"
+    ).model_dump(mode="json")
+    assert payload["exam_phase"] == "PROCESSING"
+    assert SyncResponse.model_validate(payload).exam_phase == "PROCESSING"
+
+
+def test_sync_response_still_forbids_unknown_fields():
+    """station-sync/v1 is unchanged: adding exam_phase did not loosen the model."""
+    with pytest.raises(PydanticValidationError):
+        SyncResponse(server_time=datetime.now(timezone.utc), exam_stage="ENTRY_LOCKED")
+
+
 def test_station_package_manifest_defaults_contract_version():
     m = StationPackageManifest(
         package_id="pkg_1",
