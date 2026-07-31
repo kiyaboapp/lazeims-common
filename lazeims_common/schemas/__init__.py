@@ -12,9 +12,13 @@ from .exametrics import (
     CapabilitiesResponse,
     ExamProvisionRequest,
     ExamProvisionResponse,
+    KeyProvisionRequest,
+    KeyProvisionResponse,
     ProcessingQuoteOut,
     ProcessingRequestIn,
+    RequesterInfo,
     SubjectSpec,
+    TenantExamInfo,
     TenantInfo,
 )
 from .marks import ItemMarkIn, StudentPaperMarksIn, TotalMarkIn
@@ -50,8 +54,12 @@ __all__ = [
     "CapabilitiesResponse",
     "ExamProvisionRequest",
     "ExamProvisionResponse",
+    "KeyProvisionRequest",
+    "KeyProvisionResponse",
     "ProcessingQuoteOut",
     "ProcessingRequestIn",
+    "RequesterInfo",
     "SubjectSpec",
+    "TenantExamInfo",
     "TenantInfo",
 ]

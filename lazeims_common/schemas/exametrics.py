@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 CONTRACT_VERSION = "exametrics-integration/v2"
 
@@ -71,8 +71,13 @@ class ExamProvisionResponse(BaseModel):
 
 # ─── Capabilities (GET /integration/me) ──────────────────────────────────────────
 
-class TenantInfo(BaseModel):
-    """Minimal tenant (exam) info returned in capabilities response."""
+class TenantExamInfo(BaseModel):
+    """The ExaMetrics exam account a key is scoped to.
+
+    Named ``TenantExamInfo`` (never bare "tenant") because "tenant" already
+    means *a subscribing school* elsewhere in the platform
+    (``TenantSchool``/``shuleyetu_tenant_schools``).
+    """
 
     model_config = ConfigDict(extra="forbid")
 
@@ -81,17 +86,31 @@ class TenantInfo(BaseModel):
     environment: str = Field(default="production", description="Deployment environment.")
 
 
+#: Deprecated alias kept for one release so existing importers keep working.
+#: Use :class:`TenantExamInfo`.
+TenantInfo = TenantExamInfo
+
+
 class CapabilitiesResponse(BaseModel):
     """GET /integration/me response.
 
     Tells a partner what their key can do, the contract version in use,
     applicable limits, and supported rules versions.
+
+    ``tenant_exam`` accepts the legacy ``tenant`` wire key for one release
+    (backend-sis and Central deploy independently) but only ever serialises
+    ``tenant_exam``.
     """
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     contract_version: str = Field(default=CONTRACT_VERSION)
-    tenant: TenantInfo
+    tenant_exam: TenantExamInfo = Field(
+        ...,
+        validation_alias=AliasChoices("tenant_exam", "tenant"),
+        serialization_alias="tenant_exam",
+        description="The ExaMetrics exam account this key is scoped to.",
+    )
     capabilities: Dict[str, bool] = Field(
         ...,
         description=(
@@ -109,6 +128,94 @@ class CapabilitiesResponse(BaseModel):
         default_factory=lambda: ["1.0"],
         description="Rules versions this ExaMetrics deployment supports.",
     )
+    approval_status: Optional[str] = Field(
+        None,
+        description="Approval state of the commercial scopes: PENDING | APPROVED | REJECTED | NOT_REQUIRED.",
+    )
+    approval_note: Optional[str] = Field(
+        None, description="Reviewer note, populated when approval_status is REJECTED."
+    )
+    requested_scopes: List[str] = Field(
+        default_factory=list, description="Scopes the partner asked for."
+    )
+    usable_scopes: List[str] = Field(
+        default_factory=list,
+        description="Subset of requested_scopes usable right now (free scopes plus approved paid ones).",
+    )
+    key_prefix: Optional[str] = Field(
+        None,
+        description="Non-secret leading fragment of the key, safe to display for support.",
+    )
+
+
+# ─── Key provisioning (POST /integration/provision) ──────────────────────────────
+
+class RequesterInfo(BaseModel):
+    """Identity of the partner-side operator who asked for a key.
+
+    Resolved server-side from the session user, never supplied by a browser,
+    so it cannot be forged. Distinct from ExaMetrics' own ``created_by`` user FK.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(..., min_length=1, max_length=150, description="Full name of the requester.")
+    username: Optional[str] = Field(None, max_length=150)
+    role: Optional[str] = Field(None, max_length=50)
+    user_ref: Optional[str] = Field(None, max_length=64, description="Partner-side user identifier.")
+    contact: Optional[str] = Field(None, max_length=150, description="Email or phone number.")
+
+
+class KeyProvisionRequest(BaseModel):
+    """POST /integration/provision payload.
+
+    Sent server-to-server by the partner's backend (authenticated with the zone
+    enrolment secret, not an API key) so no human ever handles the issued key.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    external_ref: str = Field(..., min_length=1, max_length=64, description="Partner's own exam identifier.")
+    exam_name: str = Field(..., min_length=1, max_length=150, description="Human-readable exam name.")
+    exam_level: str = Field(..., min_length=1, max_length=20, description="STNA | SFNA | PSLE | FTNA | CSEE | ACSEE")
+    board_name: Optional[str] = Field(
+        None, max_length=150,
+        description="Board name; resolved or created on the ExaMetrics side when board_id is absent.",
+    )
+    board_id: Optional[str] = Field(None, max_length=64, description="ExaMetrics board ID, when already known.")
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    scopes: List[str] = Field(
+        default_factory=list,
+        description="Scopes requested. Free scopes are granted immediately, paid ones queue for approval.",
+    )
+    partner_label: Optional[str] = Field(None, max_length=100, description="Label for the issued key.")
+    requested_by: Optional[RequesterInfo] = None
+
+
+class KeyProvisionResponse(BaseModel):
+    """Response to a successful provisioning request.
+
+    ``api_key`` is returned exactly once, server-to-server only: it is never
+    placed in a response a browser can read and never written to an audit record.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    api_key: str = Field(..., description="The secret, returned once, server-to-server only.")
+    key_id: str = Field(..., description="ExaMetrics ID of the issued key record.")
+    key_prefix: Optional[str] = Field(None, description="Non-secret leading fragment, safe to display.")
+    exam_ref: str = Field(..., description="ExaMetrics-side exam ID.")
+    external_ref: str = Field(..., description="Echo of the partner's external_ref.")
+    exam_created: bool = Field(default=False, description="True if a new exam was provisioned.")
+    requested_scopes: List[str] = Field(default_factory=list)
+    usable_scopes: List[str] = Field(
+        default_factory=list, description="Scopes usable immediately, without waiting for approval."
+    )
+    approval_status: Optional[str] = Field(
+        None, description="PENDING | APPROVED | REJECTED | NOT_REQUIRED"
+    )
+    approval_note: Optional[str] = None
 
 
 # ─── Processing request / quote ──────────────────────────────────────────────────

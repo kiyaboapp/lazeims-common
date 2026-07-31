@@ -11,9 +11,13 @@ from lazeims_common.schemas.exametrics import (
     CapabilitiesResponse,
     ExamProvisionRequest,
     ExamProvisionResponse,
+    KeyProvisionRequest,
+    KeyProvisionResponse,
     ProcessingQuoteOut,
     ProcessingRequestIn,
+    RequesterInfo,
     SubjectSpec,
+    TenantExamInfo,
     TenantInfo,
 )
 
@@ -149,6 +153,175 @@ def test_capabilities_response_tenant_defaults():
     assert t.environment == "production"
 
 
+def test_tenant_info_is_deprecated_alias_of_tenant_exam_info():
+    assert TenantInfo is TenantExamInfo
+
+
+def test_capabilities_accepts_tenant_exam_key():
+    resp = CapabilitiesResponse(
+        tenant_exam={"id": "exam-001", "name": "CSEE 2026"},
+        capabilities={"collection.push": True},
+    )
+    assert resp.tenant_exam.id == "exam-001"
+
+
+def test_capabilities_accepts_legacy_tenant_key():
+    resp = CapabilitiesResponse(
+        tenant={"id": "exam-001", "name": "CSEE 2026"},
+        capabilities={"collection.push": True},
+    )
+    assert resp.tenant_exam.name == "CSEE 2026"
+
+
+def test_capabilities_dump_emits_tenant_exam_only():
+    resp = CapabilitiesResponse(
+        tenant={"id": "exam-001"},
+        capabilities={"collection.push": True},
+    )
+    dumped = resp.model_dump(by_alias=True)
+    assert "tenant_exam" in dumped
+    assert "tenant" not in dumped
+
+
+def test_capabilities_approval_fields_default():
+    resp = CapabilitiesResponse(
+        tenant_exam={"id": "exam-001"},
+        capabilities={"collection.push": True},
+    )
+    assert resp.approval_status is None
+    assert resp.approval_note is None
+    assert resp.requested_scopes == []
+    assert resp.usable_scopes == []
+    assert resp.key_prefix is None
+
+
+def test_capabilities_approval_fields_populated():
+    resp = CapabilitiesResponse(
+        tenant_exam={"id": "exam-001"},
+        capabilities={"collection.push": True, "results.read": False},
+        approval_status="PENDING",
+        approval_note=None,
+        requested_scopes=["collection:push", "results:read"],
+        usable_scopes=["collection:push"],
+        key_prefix="lz_ab12cd",
+    )
+    assert resp.usable_scopes == ["collection:push"]
+    assert resp.key_prefix == "lz_ab12cd"
+
+
+# ─── RequesterInfo ────────────────────────────────────────────────────────────────
+
+def test_requester_info_round_trip():
+    req = RequesterInfo(
+        name="Asha Mwenda",
+        username="amwenda",
+        role="GLOBAL_ADMIN",
+        user_ref="user-uuid-1",
+        contact="asha@example.com",
+    )
+    assert req.model_dump() == {
+        "name": "Asha Mwenda",
+        "username": "amwenda",
+        "role": "GLOBAL_ADMIN",
+        "user_ref": "user-uuid-1",
+        "contact": "asha@example.com",
+    }
+
+
+def test_requester_info_name_only():
+    req = RequesterInfo(name="Asha Mwenda")
+    assert req.username is None
+    assert req.contact is None
+
+
+def test_requester_info_requires_name():
+    with pytest.raises(PydanticValidationError):
+        RequesterInfo(username="amwenda")
+
+
+# ─── KeyProvisionRequest / KeyProvisionResponse ───────────────────────────────────
+
+def test_key_provision_request_minimal():
+    req = KeyProvisionRequest(
+        external_ref="exam-uuid-1",
+        exam_name="CSEE 2026",
+        exam_level="CSEE",
+    )
+    assert req.scopes == []
+    assert req.requested_by is None
+    assert req.board_name is None
+
+
+def test_key_provision_request_full():
+    req = KeyProvisionRequest(
+        external_ref="exam-uuid-1",
+        exam_name="CSEE 2026",
+        exam_level="CSEE",
+        board_name="Zone 1 Board",
+        board_id="board-001",
+        start_date="2026-06-01",
+        end_date="2026-06-30",
+        scopes=["collection:push", "results:read"],
+        partner_label="LAZEIMS Zone 1",
+        requested_by={"name": "Asha Mwenda", "role": "GLOBAL_ADMIN"},
+    )
+    assert req.requested_by.name == "Asha Mwenda"
+    assert req.scopes == ["collection:push", "results:read"]
+
+
+def test_key_provision_request_forbids_extra_fields():
+    with pytest.raises(PydanticValidationError):
+        KeyProvisionRequest(
+            external_ref="exam-uuid-1",
+            exam_name="CSEE 2026",
+            exam_level="CSEE",
+            api_key="never-accept-this",
+        )
+
+
+@pytest.mark.parametrize("missing", ["external_ref", "exam_name", "exam_level"])
+def test_key_provision_request_required_fields(missing):
+    payload = {
+        "external_ref": "exam-uuid-1",
+        "exam_name": "CSEE 2026",
+        "exam_level": "CSEE",
+    }
+    payload.pop(missing)
+    with pytest.raises(PydanticValidationError):
+        KeyProvisionRequest(**payload)
+
+
+def test_key_provision_response_defaults():
+    resp = KeyProvisionResponse(
+        api_key="lz_secret",
+        key_id="key-uuid-1",
+        exam_ref="exam-ref-1",
+        external_ref="exam-uuid-1",
+    )
+    assert resp.usable_scopes == []
+    assert resp.requested_scopes == []
+    assert resp.exam_created is False
+    assert resp.approval_status is None
+    assert resp.key_prefix is None
+
+
+def test_key_provision_response_full():
+    resp = KeyProvisionResponse(
+        api_key="lz_secret",
+        key_id="key-uuid-1",
+        key_prefix="lz_ab12cd",
+        exam_ref="exam-ref-1",
+        external_ref="exam-uuid-1",
+        exam_created=True,
+        requested_scopes=["collection:push", "results:process"],
+        usable_scopes=["collection:push"],
+        approval_status="PENDING",
+        approval_note=None,
+    )
+    assert resp.exam_created is True
+    assert resp.usable_scopes == ["collection:push"]
+
+
 # ─── ProcessingRequestIn / ProcessingQuoteOut ─────────────────────────────────────
 
 def test_processing_request_defaults():
@@ -215,15 +388,23 @@ def test_schemas_re_export():
         CapabilitiesResponse as CR,
         ExamProvisionRequest as EPR,
         ExamProvisionResponse as EPRSP,
+        KeyProvisionRequest as KPRQ,
+        KeyProvisionResponse as KPRS,
         ProcessingQuoteOut as PQO,
         ProcessingRequestIn as PRI,
+        RequesterInfo as RI,
         SubjectSpec as SS,
+        TenantExamInfo as TEI,
         TenantInfo as TI,
     )
     assert CR is CapabilitiesResponse
     assert EPR is ExamProvisionRequest
     assert EPRSP is ExamProvisionResponse
+    assert KPRQ is KeyProvisionRequest
+    assert KPRS is KeyProvisionResponse
     assert PQO is ProcessingQuoteOut
     assert PRI is ProcessingRequestIn
+    assert RI is RequesterInfo
     assert SS is SubjectSpec
+    assert TEI is TenantExamInfo
     assert TI is TenantInfo
