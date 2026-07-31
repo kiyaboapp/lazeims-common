@@ -13,7 +13,9 @@ Guide are written **exactly once** and can never drift between the two implement
 | `errors.py` | `ValidationError` carrying a stable `RejectionCode`, plus the JSON error-envelope builder. |
 | `natural_keys.py` | Build/parse the natural key `exam_code + student_id + subject_code + paper_type + question_number`; student-id rules. |
 | `hashing.py` | Deterministic canonical JSON + SHA-256 for reconciliation and snapshot integrity. |
-| `schemas/` | Versioned Pydantic contracts: attendance, marks, station package, station sync, collection export. |
+| `exametrics_digest.py` | Canonicalisation, digesting and chunking of the ExaMetrics collection payload. Row ordering and null-dropping are **contract**, not implementation detail: Central and ExaMetrics must reach the same digest for the same data. |
+| `schemas/` | Versioned Pydantic contracts: attendance, marks, station package, station sync, collection export, ExaMetrics integration. |
+| `fixtures/` | Contract fixtures as plain dicts, asserted from more than one repository so three services on three pydantic versions agree on **bytes**. Shipped in the package because `backend-sis` imports them from its own tests. |
 | `validation/` | Pure, database-independent rule functions (effective attendance, gating, ranges, completeness, best-N-of-M, topic-weight sum). |
 
 ## Design rules
