@@ -8,6 +8,15 @@ from .collection_export import (
     CollectionSnapshot,
     ScopeCount,
 )
+from .exametrics import (
+    CapabilitiesResponse,
+    ExamProvisionRequest,
+    ExamProvisionResponse,
+    ProcessingQuoteOut,
+    ProcessingRequestIn,
+    SubjectSpec,
+    TenantInfo,
+)
 from .marks import ItemMarkIn, StudentPaperMarksIn, TotalMarkIn
 from .station_package import (
     PackageScope,
@@ -38,4 +47,11 @@ __all__ = [
     "CollectionManifest",
     "CollectionSnapshot",
     "ScopeCount",
+    "CapabilitiesResponse",
+    "ExamProvisionRequest",
+    "ExamProvisionResponse",
+    "ProcessingQuoteOut",
+    "ProcessingRequestIn",
+    "SubjectSpec",
+    "TenantInfo",
 ]

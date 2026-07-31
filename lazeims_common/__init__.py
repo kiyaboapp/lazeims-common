@@ -16,6 +16,7 @@ RULES_VERSION = "1.0"
 STATION_PACKAGE_CONTRACT = "station-package/v1"
 STATION_SYNC_CONTRACT = "station-sync/v1"
 COLLECTION_EXPORT_CONTRACT = "collection-export/v1"
+EXAMETRICS_INTEGRATION_CONTRACT = "exametrics-integration/v2"
 
 __all__ = [
     "enums",
@@ -34,4 +35,5 @@ __all__ = [
     "STATION_PACKAGE_CONTRACT",
     "STATION_SYNC_CONTRACT",
     "COLLECTION_EXPORT_CONTRACT",
+    "EXAMETRICS_INTEGRATION_CONTRACT",
 ]
