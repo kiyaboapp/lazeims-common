@@ -1,5 +1,0 @@
-pydantic<3.0,>=2.5
-cryptography>=42.0
-
-[dev]
-pytest>=7.4
