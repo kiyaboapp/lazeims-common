@@ -15,6 +15,7 @@ from . import (
     portable,
     reconcile,
     schemas,
+    signing,
     validation,
 )
 from .errors import LazeimsError, ValidationError, error_envelope
@@ -44,6 +45,7 @@ __all__ = [
     "portable",
     "reconcile",
     "schemas",
+    "signing",
     "validation",
     "LazeimsError",
     "ValidationError",

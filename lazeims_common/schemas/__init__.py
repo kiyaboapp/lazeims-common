@@ -37,7 +37,15 @@ from .exametrics import (
 )
 from .marks import ItemMarkIn, StudentPaperMarksIn, TotalMarkIn
 from .station_package import (
+    CONTRACT_VERSION,
+    DataEntererScopeEntry,
+    MachineCredentialMeta,
+    MachineCredentialPayload,
+    PackageErrorCode,
+    PackageFileHashes,
     PackageScope,
+    SigningMeta,
+    StationAdminEntry,
     StationPackageManifest,
 )
 from .station_sync import (
@@ -56,6 +64,14 @@ __all__ = [
     "StudentPaperMarksIn",
     "StationPackageManifest",
     "PackageScope",
+    "DataEntererScopeEntry",
+    "MachineCredentialMeta",
+    "MachineCredentialPayload",
+    "PackageErrorCode",
+    "PackageFileHashes",
+    "SigningMeta",
+    "StationAdminEntry",
+    "CONTRACT_VERSION",
     "SyncEvent",
     "SyncRequest",
     "SyncResponse",
