@@ -137,6 +137,7 @@ def test_station_package_manifest_defaults_contract_version():
         configuration_hash="sha256:abc",
         issued_at=datetime.now(timezone.utc),
         scope={"schools": ["S1234"], "subjects": ["011"], "papers": ["THEORY1"]},
+        machine_credential={"credential_id": "cred_test", "algorithm": "argon2id"},
     )
     assert m.contract_version == "station-package/v1"
     assert m.scope.schools == ["S1234"]
