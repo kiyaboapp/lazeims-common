@@ -122,3 +122,27 @@ def verify_package_signature(manifest: dict, signature: str, public_key: Ed25519
         return False
     hex_sig = signature[len("ed25519:"):]
     return verify_signature(manifest, hex_sig, public_key)
+
+
+def sign_provision_request(payload: dict) -> str:
+    """Sign a provisioning request payload, returning ``ed25519:<hex>``.
+
+    Used by lazeims-core when calling backend-sis's provisioning endpoint so
+    the request is authenticated without a shared secret in ``.env``.
+    """
+    raw_hex = sign_data(payload)
+    return f"ed25519:{raw_hex}"
+
+
+def verify_provision_signature(
+    payload: dict, signature: str, public_key: Ed25519PublicKey | None = None
+) -> bool:
+    """Verify a provisioning request signature (expects ``ed25519:<hex>`` prefix).
+
+    Used by backend-sis to authenticate provisioning requests from lazeims-core
+    without requiring a shared secret environment variable.
+    """
+    if not signature.startswith("ed25519:"):
+        return False
+    hex_sig = signature[len("ed25519:"):]
+    return verify_signature(payload, hex_sig, public_key)
