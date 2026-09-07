@@ -151,3 +151,7 @@ class PackageErrorCode:
     SIGNING_KEY_UNAVAILABLE = "SIGNING_KEY_UNAVAILABLE"
     CREDENTIAL_GENERATION_FAILED = "CREDENTIAL_GENERATION_FAILED"
     NO_REGISTERED_STUDENTS = "NO_REGISTERED_STUDENTS"
+    # No admin credential in the seed. The station has no other way in: Data
+    # Enterers are created *on* the station by its admin, so a package without one
+    # imports and activates cleanly and then rejects every login attempt.
+    NO_STATION_ADMIN = "NO_STATION_ADMIN"

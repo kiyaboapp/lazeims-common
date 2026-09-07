@@ -135,6 +135,12 @@ class RejectionCode(str, Enum):
     UNRESOLVED_INCIDENT = "UNRESOLVED_INCIDENT"
     DEPENDENCY_NOT_ACCEPTED = "DEPENDENCY_NOT_ACCEPTED"
     EVENT_ID_PAYLOAD_CONFLICT = "EVENT_ID_PAYLOAD_CONFLICT"
+    # A newer write for the same paper is already recorded, so applying this one
+    # would undo work. Terminal, like every rejection: the event describes a
+    # moment that has been overtaken, and no retry can change that. The station
+    # keeps it visible as REJECTED so the operator can re-enter the value if it
+    # is in fact the correct one — which stamps it with a current time.
+    STALE_EVENT = "STALE_EVENT"
     # Configuration-time validation
     INCOMPLETE_QUESTION_SET = "INCOMPLETE_QUESTION_SET"
     TOPIC_WEIGHT_SUM_INVALID = "TOPIC_WEIGHT_SUM_INVALID"
